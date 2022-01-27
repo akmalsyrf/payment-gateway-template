@@ -31,6 +31,20 @@ export default function DetailProduct() {
   });
 
   // Create config Snap payment page with useEffect here ...
+  useEffect(() => {
+    const midtransScriptUrl = "https://app.sandbox.midtrans.com/snap/snap.js";
+    const myMidtransClientKey = "SB-Mid-client-GjKB0rHnannm7Bdp";
+
+    let scriptTag = document.createElement("script");
+    scriptTag.src = midtransScriptUrl;
+
+    scriptTag.setAttribute("data-client-key", myMidtransClientKey);
+
+    document.body.appendChild(scriptTag);
+    return () => {
+      document.body.removeChild(scriptTag);
+    };
+  }, []);
 
   const handleBuy = useMutation(async () => {
     try {
@@ -58,8 +72,29 @@ export default function DetailProduct() {
       const response = await api.post("/transaction", config);
 
       // Create variabel for store token payment from response here ...
+      const token = response.payment.token;
 
       // Init Snap for display payment page with token here ...
+      window.snap.pay(token, {
+        onSuccess: function (result) {
+          /* You may add your own implementation here */
+          console.log(result);
+          history.push("/profile");
+        },
+        onPending: function (result) {
+          /* You may add your own implementation here */
+          console.log(result);
+          history.push("/profile");
+        },
+        onError: function (result) {
+          /* You may add your own implementation here */
+          console.log(result);
+        },
+        onClose: function () {
+          /* You may add your own implementation here */
+          alert("you closed the popup without finishing the payment");
+        },
+      });
     } catch (error) {
       console.log(error);
     }
@@ -76,18 +111,11 @@ export default function DetailProduct() {
           </Col>
           <Col md="5">
             <div className="text-header-product-detail">{product?.name}</div>
-            <div className="text-content-product-detail">
-              Stock : {product?.qty}
-            </div>
+            <div className="text-content-product-detail">Stock : {product?.qty}</div>
             <p className="text-content-product-detail mt-4">{product?.desc}</p>
-            <div className="text-price-product-detail text-end mt-4">
-              {convertRupiah.convert(product?.price)}
-            </div>
+            <div className="text-price-product-detail text-end mt-4">{convertRupiah.convert(product?.price)}</div>
             <div className="d-grid gap-2 mt-5">
-              <button
-                onClick={() => handleBuy.mutate()}
-                className="btn btn-buy"
-              >
+              <button onClick={() => handleBuy.mutate()} className="btn btn-buy">
                 Buy
               </button>
             </div>
